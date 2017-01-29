@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>websocket-chat</title>
+    <link rel="stylesheet"
+    href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <!-- C01. Socket.IOクライアントライブラリの読み込み -->
+    <!-- <script type="text/javascript" src="/socket.io/socket.io.js"></script> -->
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket-Show Temperature and Humidity</h1>
+        <form class="form-inline">
+            <div class="form-group">
+                <label for="msgForm" color="red" id="module">モジュール名：</label>
+                <br>
+                <font color="blue">
+                  <label for="msgForm" id="datetime">datetime：</label>
+                </font>
+                <br>
+                <div id="line_top_x"></div>
+                <label for="msgForm" id="message">メッセージ：</label>
+                <input type="text" class="form-control" id="msgForm">
+            </div>
+            <br>
+            <button type="submit" class="btn btn-primary" id="sendButton">Send</button>
+        </form>
+        <div id="chatLogs"></div>
+        <!-- <div id="line_top_x"></div> -->
+    </div>
+
+    <script type="text/javascript">
+        //温度と湿度
+        var tmp = [];
+        var hum = [];
+        var moduleName;
+        var datetime;
+        var isEnter = false;
+        //受信データを保存
+        var data;
+        var cnt = 2;
+        var chart;
+        // infoは情報表示用のdiv要素
+        var ws = new WebSocket("wss://api.sakura.io/ws/v1/b44ad600-e44a-4aff-a7a1-480f75f04b73");
+
+
+        // メッセージ受信イベントハンドラ
+        ws.onmessage = function(event){
+           //受信時の処理
+           data = JSON.parse(event.data);
+          //  console.log(data);
+           if (data.hasOwnProperty('payload')) {
+             //最初の受信ならモジュール名を取得する
+             if(isEnter == false){
+              changeLabel();
+             }
+
+              //送信データを取得するためにjsonデータを変更
+               data = data.payload.channels;
+              //  console.log(data);
+              cnt++;
+               $('#heroes').empty();
+               $.each(data, function (key, val) {
+                 //温度を追加
+                 if(val.channel == 0){
+                   tmp.push(val.value);
+                   console.log(tmp);
+                 }
+                 //湿度を追加
+                 else if(val.channel == 1){
+                   hum.push(val.value);
+                   console.log(hum);
+                   //データが20を超えたら先頭を消す
+                   if(hum.length > 21){
+                     tmp.shift();
+                     hum.shift();
+                     //5秒ごとにグラフを更新
+                     if(cnt >= 3){
+                       drawChart();
+                       cnt = 0;
+                     }
+                   }
+                   else{
+                      drawChart();
+                   }
+
+                 }
+               });
+           }
+        }
+
+        // appendMsg("hello");
+        function appendMsg(text) {
+            $("#chatLogs").append("<div>" + text + "</div>");
+            // document.write(text);
+        }
+
+        ws.onerror = function(event){
+          //エラー処理
+        }
+        function changeLabel() {
+            $("#module").text("モジュール名：　"+data.module);
+            $("#datetime").text("datetime：　"+data.datetime);
+            isEnter = true;
+        }
+        // メッセージ送信
+        // ws.send("送信メッセージ");
+
+        //配列の最後の値を返す　Arrayのプロトタイプを拡張
+        Array.prototype.getLastVal = function (){ return this[this.length -1];}
+
+        // google chart
+        google.charts.load('current', {'packages':['line']});
+      google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+
+      var data = new google.visualization.DataTable();
+      data.addColumn('number', 'time');
+      data.addColumn('number', '温度'+tmp.getLastVal());
+      data.addColumn('number', '湿度'+hum.getLastVal());
+
+      for(var i=0;i<tmp.length;i++){
+        data.addRows([[i,tmp[i],hum[i]]]);
+        // appendMsg(hum[i]);
+      }
+      // data.addRows([
+      //   [1,  37.8, 80.8, 41.8],
+      //   [2,  30.9, 69.5, 32.4],
+      //   [3,  25.4,   57, 25.7],
+      //   [4,  11.7, 18.8, 10.5],
+      //   [5,  11.9, 17.6, 10.4],
+      //   [6,   8.8, 13.6,  7.7],
+      //   [7,   7.6, 12.3,  9.6],
+      //   [8,  12.3, 29.2, 10.6],
+      //   [9,  16.9, 42.9, 14.8],
+      //   [10, 12.8, 30.9, 11.6],
+      //   [11,  5.3,  7.9,  4.7],
+      //   [12,  6.6,  8.4,  5.2],
+      //   [13,  4.8,  6.3,  3.6],
+      //   [14,  4.2,  6.2,  3.4]
+      // ]);
+
+      var options = {
+        chart: {
+          title: 'たぶさ研究室の温度と湿度(3秒更新)',
+          subtitle: 'made by Hayate Nakayama(TABU-TEC)'
+        },
+        width: 900,
+        height: 500,
+        series: {
+          // Gives each series an axis name that matches the Y-axis below.
+          0: {axis: 'Temps'},
+          1: {axis: 'Humidity'}
+        },
+        axes: {
+          x: {
+            0: {side: 'top'}
+          },
+          y: {
+            Temps: {label: 'Temps (Celsius)'},
+            Daylight: {label: 'Humidity'}
+          }
+        }
+      };
+
+      chart = new google.charts.Line(document.getElementById('line_top_x'));
+
+      chart.draw(data, options);
+    }
+    // function addInfo(){
+    //   for(var i=0;i<tmp.length;i++){
+    //     data.addRows([[i,tmp[i],hum[i]]]);
+    //   }
+    //   chart.draw(data, options);
+    // }
+
+    </script>
+</body>
+</html>
