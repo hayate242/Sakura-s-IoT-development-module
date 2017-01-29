@@ -21,6 +21,7 @@
                   <label for="msgForm" id="datetime">datetime：</label>
                 </font>
                 <br>
+                <!-- drawchar here -->
                 <div id="line_top_x"></div>
                 <label for="msgForm" id="message">メッセージ：</label>
                 <input type="text" class="form-control" id="msgForm">
@@ -67,12 +68,12 @@
                  //温度を追加
                  if(val.channel == 0){
                    tmp.push(val.value);
-                   console.log(tmp);
+                  //  console.log(tmp);
                  }
                  //湿度を追加
                  else if(val.channel == 1){
                    hum.push(val.value);
-                   console.log(hum);
+                  //  console.log(hum);
                    //データが20を超えたら先頭を消す
                    if(hum.length > 21){
                      tmp.shift();
