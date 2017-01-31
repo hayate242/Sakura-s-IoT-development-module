@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!--  -->
+<!-- このサンプルを使用する前に -->
+<!--  さくらのIoT moduleにスケッチの例から　-->
+<!--  sakuraIO/HDC1000を書き込んで実行してください　-->
 <html lang="ja">
 <head>
     <meta charset="utf-8">
@@ -7,8 +11,6 @@
     href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <!-- C01. Socket.IOクライアントライブラリの読み込み -->
-    <!-- <script type="text/javascript" src="/socket.io/socket.io.js"></script> -->
 </head>
 <body>
     <div class="container">
@@ -44,7 +46,11 @@
         var data;
         var cnt = 2;
         var chart;
-        // infoは情報表示用のdiv要素
+
+        // WebSocketの"wss~"を環境に合わせて変更してください
+        /*
+        **  wssはIoTplatformの新しく作成したWebSocketの中にあるのでコピペしてください
+        */
         var ws = new WebSocket("wss://api.sakura.io/ws/v1/b44ad600-e44a-4aff-a7a1-480f75f04b73");
 
 
